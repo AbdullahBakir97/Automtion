@@ -1,22 +1,31 @@
 import os
 
-def generate_directory_structure(root_dir):
+def generate_directory_structure(root_dir, indent=''):
     structure = []
+    items = os.listdir(root_dir)
+    items.sort()  # Sort items to maintain consistent order
 
-    for root, dirs, files in os.walk(root_dir):
-        level = root.replace(root_dir, '').count(os.sep)
-        indent = ' ' * 4 * level
-        structure.append(f"{indent}{os.path.basename(root)}/")
-        sub_indent = ' ' * 4 * (level + 1)
-        for file in files:
-            structure.append(f"{sub_indent}{file}")
+    for index, item in enumerate(items):
+        full_path = os.path.join(root_dir, item)
+        is_last = index == len(items) - 1
+        marker = '└── ' if is_last else '├── '
+        structure.append(f"{indent}{marker}{item}")
 
-    return "\n".join(structure)
+        if os.path.isdir(full_path):
+            if is_last:
+                structure.extend(generate_directory_structure(full_path, indent + '    '))
+            else:
+                structure.extend(generate_directory_structure(full_path, indent + '│   '))
+
+    return structure
 
 def write_directory_structure_to_file(root_dir, output_file):
     structure = generate_directory_structure(root_dir)
-    with open(output_file, 'w') as file:
-        file.write(structure)
+    with open(output_file, 'w', encoding='utf-8') as file:
+        try:
+            file.write("\n".join(structure))
+        except UnicodeEncodeError:
+            print("Error: Unable to write some characters to the file. Check your encoding settings.")
 
 # Example usage
 if __name__ == "__main__":
